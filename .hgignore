@@ -1,0 +1,21 @@
+syntax: glob
+
+*.fa
+*.bed
+*.xml
+*.pyc
+*~
+*.html
+*.c
+*.h
+*.txt
+*.pkl
+*.RData
+*.Rhistory
+*.orig
+*.pdf
+pdf/
+html/
+log
+temp*
+nohup.out

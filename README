@@ -1,0 +1,35 @@
+Introduction
+------------
+    This software is a tool for compare motif occurrence at peak summits versus surrounding regions.
+
+Documentation
+-------------
+    Documentation for API is available on the this webpage:
+ 
+        <http://samuthing.com/scholarship>
+
+    This documentation is also available by typing this command if epydoc 3.0 or greater is installed.
+    	$ epydoc bed2fasta.py check_file.py html_output.py mf_corelib.py seq_pssm_io.py summary_score.py triple_SS.py
+		
+
+Package Dependencies
+--------------------
+	BioPython is used to input fasta sequence file.
+
+	Bedtools is used to convert bed to fasta file (fastaFrombed) and sort bed by its position (bedSort)
+
+Usage
+-----
+	Run the whole pipeline for first time:
+    	$ pipe.py motif.xml input_summits.bed output_dir your_dir/assembly/humanhg19/masked/
+	
+	Test the integrity of a xml file and view it:
+	$ motif_xml_view.py motif.xml
+
+	Test the integrity of a fasta file and view it:
+	$ seq_GC_view.py hg19.fa
+	
+	See other usage by:
+	$ pipe.py
+
+
