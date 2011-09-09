@@ -17,8 +17,8 @@ the distribution).
 import sys
 import os
 from optparse import OptionParser
-import fse.bed2fasta
-import fse.triple_SS
+import fse.bed2fasta as bed2fasta
+import fse.triple_SS as triple_SS
 import fse.check_file as ck
 from fse.mf_corelib import error,info
 def prepare_optparser():
