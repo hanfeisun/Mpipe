@@ -19,8 +19,9 @@ def main():
           description="For scholarship exam",
           package_dir={'fse' : 'lib'},
           packages=['fse'],
-          scripts=['bin/pipe.py','bin/seq_GC_view.py','bin/motif_xml_view.py'],
+          scripts=['bin/Mpipe.py','bin/seq_GC_view.py','bin/motif_xml_view.py'],
           author='Hanfei Sun',
+          version='0.10',
           author_email='hfsun.tju@gmail.com',
           url='http://samuthing.com',
 

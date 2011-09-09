@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-08 16:31:52 sunhf>
+# Time-stamp: <2011-09-10 01:33:35 sunhf>
 
 """Module Description: Module for inputing fasta and xml file.
 
@@ -39,13 +39,20 @@ def fetch_pssm_xml(xmlfile):
     mp = MP.MotifParser()
     mp.tag_list = ["dbd", "synonym", "description"]
     mp.Parser(xmlfile)
+    for m_id in mp.motifs:
+        one_pssm=mp.motifs[m_id]['pssm']
+        for one_pos in one_pssm:
+            for i in range(0,4):
+                if one_pos[i]==0.0:
+                    one_pos[i]+=0.00001
+                    print "Found one"
     return mp.motifs
 
 def fetch_seq_record(fasta_file, alpha=_alphabet):
     """
     Fetch the sequence's nucleotide order and position information from a fasta file
-    @type  fastafile: str
-    @param fastafile: path of the XML file
+    @type  fasta_file: str
+    @param fasta_file: path of the XML file
     @rtype:   list
     @return:  sequence information
     """        

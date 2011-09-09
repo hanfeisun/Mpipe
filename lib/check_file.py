@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-08 16:07:42 sunhf>
+# Time-stamp: <2011-09-09 14:39:29 sunhf>
 
 """Module Description: Check integrity of input bed,xml and fasta files.
 
@@ -154,3 +154,19 @@ def check_fasta_dna(fname):
             return False
     return True
 
+def check_cmd(command_):
+    """
+    Check whether a command can be run in shell
+
+    @type  command_: str
+    @param command_: the command you want to check, for example, "awk"
+    @rtype:   bool
+    @return:  whether the command passed the check
+    """    
+    exit_code=os.system(command_)
+    print "-"*10+"check command %s"%command_ + "-"*10
+    if exit_code==32512:        # when command not found, exit_code is 32512
+        error("No such command as '%s'"%command_)
+        return False
+    else:
+        return True

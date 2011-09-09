@@ -1,35 +1,115 @@
 Introduction
 ------------
-    This software is a tool for compare motif occurrence at peak summits versus surrounding regions.
-
-Documentation
--------------
-    Documentation for API is available on the this webpage:
- 
-        <http://samuthing.com/scholarship>
-
-    This documentation is also available by typing this command if epydoc 3.0 or greater is installed.
-    	$ epydoc bed2fasta.py check_file.py html_output.py mf_corelib.py seq_pssm_io.py summary_score.py triple_SS.py
-		
-
+    This software is a tool for compare motif occurrence at peak
+    summits versus surrounding regions.
+    
 Package Dependencies
 --------------------
-	BioPython is used to input fasta sequence file.
+    BioPython is used to input fasta sequence file.
+    (http://biopython.org/wiki/Download)
 
-	Bedtools is used to convert bed to fasta file (fastaFrombed) and sort bed by its position (bedSort)
+    Bed tools is used to convert bed to fasta file (fastaFromBed)and
+    sort bed by its position (bedSort).
+    (http://code.google.com/p/bedtools/)
+    (Download bedSort by: git clone http://genome-source.cse.ucsc.edu/kent.git)
 
+    RPy is used to do the Wicoxon test and FDR adjust between center
+    region and side regions.
+    (http://rpy.sourceforge.net/rpy.html)
+    
+    awk is used to get three regions of bed from one summits bed and
+    to check whether a region is in legal chromosome range
+    (gawk in Linux)
+
+    Python 2.6 or above is recommended.
+
+Installation
+------------
+
+    $ python setup.py install
+    
 Usage
 -----
-	Run the whole pipeline for first time:
-    	$ pipe.py motif.xml input_summits.bed output_dir your_dir/assembly/humanhg19/masked/
-	
-	Test the integrity of a xml file and view it:
+
+    Run the whole pipeline for first time:
+    
+        $ Mpipe.py -b summits.bed -m motif_database.xml -g
+        ../assembly/human19/masked -o P300
+
+    After the first run, a fasta file named by 'hg19.fa' will be
+    generated, which can be used directly in the later runs:
+
+        $ Mpipe.py -b summits.bed -m motif_database.xml -g
+        hg19.fa -o P300
+
+    There are alse two small tools in these package, to test the
+    integrity of a xml file and view it:
+    
 	$ motif_xml_view.py motif.xml
 
-	Test the integrity of a fasta file and view it:
+    To test the integrity of a fasta file and view its GC content:
+	
 	$ seq_GC_view.py hg19.fa
 	
-	See other usage by:
-	$ pipe.py
+    You can see other usage by:
+	
+        $ Mpipe.py -h
+
+Output Files
+------------
+
+    17 files will be output into ONE directory
+
+    They are:
+
+        (1) fasta file and bed file for center region and side
+	regions.  (2) pickle file and txt file with scores of every
+	peak for center region and side regions.  (3) html file with
+	scores of every peak in center region. (CAUTION: opening this
+	html file is memory costing, need more than 1G memory for 3000
+	peaks and 700 motifs) (4) html file and txt file with summary
+	scores of every motif (5) a pdf file show the distribution of
+	p-value and difference of mean (6) the original summits bed
+	file
+
+
+    The useful outputs are:
+
+        PvM (Peaks vs Motifs) table, which is named by
+        prefix_middle.txt
+
+        MSM (Motif Score Metric) table, which is named by
+        prefix_metric.txt
+	
+        MSMC (Motif Score Metric Colored) table, which is named by
+        prefix_metric.html, colored by its pvalue and the difference
+        of mean between center and side regions.
+
+Update
+------
+    You can download the newest non-installed package by typing in
+    command:
+
+        $ hg clone https://bitbucket.org/hanfeisun/motif_test
+
+    If you prefer the setup package, do this:
+
+        $ hg clone https://bitbucket.org/hanfeisun/motif_test_setup_package
+
+API Documentation
+-----------------
+    Documentation for API is available on the this webpage:
+ 
+        http://samuthing.com/scholarship
+
+MORE
+----
+
+    View this page to get more information.
+
+    https://bitbucket.org/hanfeisun/motif_test
+ 
+
+
 
 

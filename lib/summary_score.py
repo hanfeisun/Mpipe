@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-08 11:46:38 sunhf>
+# Time-stamp: <2011-09-10 03:35:03 sunhf>
 
 """Description: Main executable for motif scaning on ONE fasta file
 
@@ -16,14 +16,13 @@ the distribution).
 """
 
 import sys
-from copy import deepcopy
-from math import log,exp
-from pprint import pprint
+from math import log
 try:
    import cPickle as pickle
 except:
    import pickle
 import html_output as ho
+from copy import deepcopy
 import seq_pssm_io as SPI
 from mf_corelib import replace_all,error,info
 _slice_seq = lambda start_points,width,raw_list:[raw_list[i:i+width] for i in start_points]
@@ -48,33 +47,81 @@ def summary_score(seq_record_list,GC_content,motifs):
     pssm_list = [[m_id,motifs[m_id]['pssm'][0]] for m_id in motifs]
     bg_GC = GC_content/2
     bg_AT = 0.5-bg_GC
-    log_bg_gc, log_bg_at = log(bg_GC), log(bg_AT)
-    dic_log_bg = {"A":log_bg_at, "C":log_bg_gc, "G":log_bg_gc, "T":log_bg_at}
+    # log_bg_gc, log_bg_at = log(bg_GC), log(bg_AT)
+    dic_bg = {"A":bg_AT, "C":bg_GC, "G":bg_GC, "T":bg_AT, "N": 0.25}
     seq_len, all_cnt = len(str(seq_record_list[0].seq)), len(seq_record_list)
 
     print "done \t all"
     
     seq_SS = []
     for cnt,seq_record in enumerate(seq_record_list):
+        seq_str=seq_record.seq
         if cnt%20 == 0:
             print "%d \t %d"%(cnt,all_cnt)
         
         mult_m_win_S = []
+
+        win_list={}
         for (m_id,pssm) in pssm_list:
             m_len = len(pssm)
-            win_start = range(0,seq_len-m_len+1)
-            win_list = _wipe_mask(_slice_seq(win_start,m_len,seq_record.seq))
+            if not win_list.has_key(m_len):
+               win_list[m_len] = {}
+               win_start = range(0,seq_len-m_len+1)
+               win_list[m_len]['win_seq'] = _wipe_mask(_slice_seq(win_start, m_len, seq_str))
+               win_list[m_len]['win_bg'] = seq_bg(seq_str, dic_bg, m_len)
+
             win_S=[]
-            for i in win_list:
-                win_bg_s=win_bg(i,dic_log_bg)
-                win_mtf_s=win_motif(i,pssm)
-                win_S_s=exp(win_mtf_s-win_bg_s)
+            for i,win_bg_s in zip(win_list[m_len]['win_seq'],win_list[m_len]['win_bg']):
+                win_mtf_s=win_motif(i,pssm,m_len)
+                win_S_s=win_mtf_s/win_bg_s
                 win_S.append(win_S_s if win_S_s>1000 else 0)
             mult_m_win_S.append(win_S)
             
         seq_SS.append([seq_record.id,[log(max(sum(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
     motif_id = [i[0] for i in pssm_list]
     return (seq_SS,motif_id,motifs)
+
+
+def seq_bg(seq_str, dic_bg, win_len):
+    bg_list = [dic_bg[i] for i in seq_str]
+    win_start = range(0, len(seq_str)-win_len+1)
+    win_bg_list = [reduce((lambda x,y:x*y),bg_list[i:i+win_len]) for i in win_start if "N" not in seq_str[i:i+win_len]]
+    return win_bg_list
+
+
+def win_motif(win_str,m_pssm,m_len):
+    """
+    Calculate the likelihood of a given sequence in the PSSM model.
+    
+    @type  win_str: str
+    @param : The path of the fasta file of specify regions
+    @type  m_pssm: N*4 matrix
+    @param m_pssm: The PSSM of a motif
+    @type  m_len: int
+    @param m_pssm: the length of the PSSM
+    """      
+    convert = {"A":0,"C":1,"G":2,"T":3}
+    rev_convert = {"A":3,"C":2,"G":1,"T":0}
+    pos_win_pr=1.0
+    rev_win_pr=1.0
+    for (index,bp) in enumerate(win_str):
+        pos_win_pr *= m_pssm[index][convert[bp]]
+        rev_win_pr *= m_pssm[m_len-index-1][rev_convert[bp]]
+    return max(pos_win_pr,rev_win_pr)
+    
+def win_bg(win_str,dic_bg):
+    """
+    Calculate the likelihood of a given sequence in the background model.
+    
+    @type  win_str: str
+    @param : The path of the fasta file of specify regions
+    @type  dic_bg: dict
+    @param dic_bg: The dict should look like this :{"A":log_bg_a, "C":log_bg_c, "G":log_bg_g, "T":log_bg_t}
+    """   
+    bg_score=0.0
+    for i in win_str:
+        bg_score += dic_bg[i]
+    return bg_score
 
 def consensus(pssm):
     """
@@ -203,40 +250,6 @@ def output_SS_html(seq_SS,motif_id,motif_info=None,output_file="seq_SS.html"):
     
         
 
-r_exp=-20
-residual = exp(r_exp)
-def win_motif(win_str,m_pssm):
-    """
-    Calculate the likelihood of a given sequence in the PSSM model.
-    
-    @type  win_str: str
-    @param : The path of the fasta file of specify regions
-    @type  m_pssm: N*4 matrix
-    @param m_pssm: The PSSM of a motif
-    """      
-    convert = {"A":0,"C":1,"G":2,"T":3}
-    rev_convert = {"A":3,"C":2,"G":1,"T":0}
-    win_len=len(win_str)
-    pos_win_pr=0.0
-    rev_win_pr=0.0
-    for (index,bp) in enumerate(win_str):
-        pos_win_pr += log(m_pssm[index][convert[bp]]+residual)
-        rev_win_pr += log(m_pssm[win_len-index-1][rev_convert[bp]]+residual)        
-    return max(pos_win_pr,rev_win_pr)
-    
-def win_bg(win_str,dic_bg):
-    """
-    Calculate the likelihood of a given sequence in the background model.
-    
-    @type  win_str: str
-    @param : The path of the fasta file of specify regions
-    @type  dic_bg: dict
-    @param dic_bg: The dict should look like this :{"A":log_bg_a, "C":log_bg_c, "G":log_bg_g, "T":log_bg_t}
-    """   
-    bg_score=0.0
-    for i in win_str:
-        bg_score += dic_bg[i]
-    return bg_score
 
 def main(fasta_file, xml_file):
     """
@@ -245,8 +258,8 @@ def main(fasta_file, xml_file):
     @type  fasta_file: str
     @param fasta_file: The path of the fasta file of specify regions
     @type  xml_file: str
-    @param xml_file: The path of the xml file with pssm information about the motifs
-    """
+    @param xml_file: The path of the xml file with pssm information about the motifs 
+   """
     seq_record = SPI.fetch_seq_record(fasta_file)
     seq_gc = SPI.fetch_GC_percent(seq_record)
     mtf = SPI.fetch_pssm_xml(xml_file)

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-08 14:54:17 sunhf>
+# Time-stamp: <2011-09-09 14:24:26 sunhf>
 
 """Module Description: Core functions for motif test
 
@@ -16,6 +16,7 @@ the distribution).
 """
 from subprocess import call as subpcall
 from subprocess import Popen,PIPE
+import os
 import sys
 import logging
 
@@ -47,7 +48,7 @@ def run_cmd ( command ):
     subpcall (command,shell=True)
     return
 
-def run_cmd_PIPE (command, verbose_log_mode=True):
+def run_cmd_PIPE (command, verbose_log_mode=True, exit_code=False):
     """
     Run a command and return the stdout and stderr.
 
@@ -55,22 +56,31 @@ def run_cmd_PIPE (command, verbose_log_mode=True):
     @param command: the command you want to run, for example, "ls -l"
     @type  verbose_log_mode: bool
     @param verbose_log_mode: whether to output all information to the log file
+    @type  exit_code: bool
+    @param exit_code: whether to return the exit code or stdout and stderr
+
     
-    @rtype:   tuple
-    @return:  (1) the standard output (2) the stadard error
+    @rtype:   str or int
+    @return:  If exit_code is False, return the stdout, else return the exit code number.
+    
     """
     info ("Run: %s" % command)
-    p_result = Popen(command,shell=True,stdout = PIPE)
-    p_output,p_error = p_result.communicate()
+    if exit_code==False:
+        p_result = Popen(command,shell=True,stdout = PIPE)
+        p_output,p_error = p_result.communicate()
     
-    if verbose_log_mode:
-        info(p_output)
+        if p_output != "" and p_output != None:
+            if verbose_log_mode:
+                info(p_output)
+            else:
+                print p_output
+        if p_error:
+            error(p_error)
+            exit(1)
+        return p_output
     else:
-        print p_output
-    if p_error:
-        error(p_error)
-        exit(1)
-    return p_output,p_error
+        exit_status=os.system(command)
+        return exit_status
 
 def _with_index(seq):
     for i in xrange(len(seq)):
