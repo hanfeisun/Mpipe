@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-08 20:34:26 root>
+# Time-stamp: <2011-09-09 18:18:42 sunhf>
 
 """Description: An executable for motif score comparing for left,right and middle regions.
 
@@ -23,9 +23,9 @@ import mf_corelib as corelib
 try:
     import rpy
 except RuntimeError:
-    from rpy_options import set_options
-    set_options(RHOME='/usr/lib64/R') # for tongji's Cent OS server
     try:
+        from rpy_options import set_options
+        set_options(RHOME='/usr/lib64/R') # for tongji's Cent OS server
         import rpy
     except:
         corelib.error("Need to install rpy first")
@@ -85,7 +85,6 @@ def triple_SS_input(pkl_left, pkl_middle, pkl_right):
     @param pkl_middle: path of middle region's pickle file
     @type  pkl_right: str
     @param pkl_right: path of right region's pickle file
-    
     @rtype : dict
     @return: Information read from the pickle files, see 'output_record_pickle' and 'input_record_pickle' in 'summary_score' module for details.
     """          
@@ -121,7 +120,6 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
     @param right_SS: Information of summary scores on the right region.
     @type  motif_xml: str
     @param motif_xml: the xml file path contains information about the motifs
-    
     @rtype : list
     @return: Information about the result of the test, and other thing useful for outputing txt and html. 
     """              
@@ -154,9 +152,14 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
                     "diff":center_mean-twoside_mean,
                     "mtf_dbd":mtf_info[m_id]['dbd'],
                     "mtf_type":mtf_info[m_id]['description'],
-                    "mtf_name":mtf_info[m_id]['synonym']
+                    "mtf_name":mtf_info[m_id]['synonym'],
+                    "p.value":a['p.value'],
                     }
         metric_list.append(dic_item)
+    pvalues = [i['p.value'] for i in metric_list]
+    fdrs = r['p.adjust'](pvalues,method="fdr")
+    for i,element in enumerate(metric_list):
+        element['fdr']=fdrs[i]
     return metric_list
 
 def dist_graph(metric_list , prefix):
@@ -178,10 +181,8 @@ def dist_graph(metric_list , prefix):
     r.hist(r.log10p_scores, main="Histogram of -10log10(pvalue)" , xlab="-10log10(pvalue)" , freq=False)
     r.lines(r["density"](r.log10p_scores) , col="red")
     r.diff_scores=[i["diff"] for i in metric_list]
-    print r.diff_scores
     r.hist(r.diff_scores, main="Histogram of difference of means between center and two sides" , xlab="center - two sides" , freq=False)
     r.lines(r["density"](r.diff_scores) , col="red")
-    r.boxplot(r.diff_scores)
     r["dev.off"]()
     info("The graph of distribution has been created at %s"%output_file)
 
@@ -229,7 +230,7 @@ def sig_test_output_html(metric_list, prefix,cutoff=1e-10):
     stradd = lambda *args:reduce(lambda s1, s2:s1+s2, args)
     nj = lambda x:"\n".join(x)
     cj = lambda x:", ".join(x)
-    select_keys = lambda i:[i["mtf_id"],i["-log10p"],i["middle_mean"],
+    select_keys = lambda i:[i["mtf_id"],i["-log10p"],i["fdr"],i["middle_mean"],
                             i["twoside_mean"],i["diff"],
                             cj(i["mtf_dbd"]) if i["mtf_dbd"]!=[] else "N/A",
                             cj(i["mtf_type"]),cj(i["mtf_name"])]
@@ -248,7 +249,7 @@ def sig_test_output_html(metric_list, prefix,cutoff=1e-10):
             else:
                 color_list.append(line(select_keys(i)))
         return color_list
-    txt = fst(["motif id", "-10log10(pvalue) (Wilcoxon test)",
+    txt = fst(["motif id", "-10log10(pvalue) (Wilcoxon test)","naive fdr",
                "mean of center", "mean of left and right","middle - edge",
                " motif dbd name", "motif type","motif names"])
     txt += nj(auto_color(metric_list, 5))
@@ -271,8 +272,7 @@ def main(prefix, motif_xml_file, continue_=False):
     @type  continue_: bool
     @param  continue_: whether to continue from existing pickle files, if true, needs prefix+"_left.pkl", prefix+"_middle.pkl", prefix+"_right.pkl" existing.
     """    
-    print motif_xml_file
-    print prefix
+    print "current motif file:"+motif_xml_file
     if continue_:
         triple_pkl = [_name_p(prefix,part,"pkl") for part in ("left","middle","right")]
         for one_pkl in triple_pkl:
