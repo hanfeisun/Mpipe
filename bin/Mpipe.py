@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 04:29:07 sunhf>
+# Time-stamp: <2011-09-10 09:06:03 sunhf>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -17,8 +17,8 @@ the distribution).
 import sys
 import os
 from optparse import OptionParser
-import fse.bed2fasta as bed2fasta
-import fse.triple_SS as triple_SS
+import fse.bed2fasta
+import fse.triple_SS
 import fse.check_file as ck
 from fse.mf_corelib import error,info
 def prepare_optparser():
@@ -108,7 +108,7 @@ def main():
     # convert bed to fasta files on three regions
     dir_prefix = op.prefix_name+"/"+op.prefix_name
     # produce an absolute path with the prefix
-    triple_SS.main(dir_prefix, op.motif_xml)
+    triple_SS.main(dir_prefix, op.motif_xml,op.cutoff)
     # use the files in 'prefix' dir to calculate scores
 if __name__ == '__main__':
     try:
