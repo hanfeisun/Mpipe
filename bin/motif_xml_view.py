@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 import sys
 import fse.seq_pssm_io as io
 
