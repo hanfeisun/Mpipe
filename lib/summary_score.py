@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 03:35:03 sunhf>
+# Time-stamp: <2011-09-10 14:17:53 sunhf>
 
 """Description: Main executable for motif scaning on ONE fasta file
 
@@ -28,7 +28,7 @@ from mf_corelib import replace_all,error,info
 _slice_seq = lambda start_points,width,raw_list:[raw_list[i:i+width] for i in start_points]
 _wipe_mask = lambda sliced_seq:[i for i in sliced_seq if "N" not in i]
 
-def summary_score(seq_record_list,GC_content,motifs):
+def summary_score(seq_record_list,GC_content,motifs,cutoff=1000):
     """
     Run the whole pipeline for motif test on BioPython's Sequences.
 
@@ -40,14 +40,15 @@ def summary_score(seq_record_list,GC_content,motifs):
     @param GC_content: the frequency of 'G' AND 'C', for example "GGATTCCCGC"'s GC_content is 0.7
     @type  motifs: a list of dictionaries with motifs' information
     @param motifs: Get it by 'fetch_pssm_xml' in 'seq_pssm_io' module.
-    
+    @type  cutoff: int
+    @param  cutoff: the cutoff of the likelihood quotient      
+   
     @rtype:   tuple
     @return:  (1) Summary score for every sequences with every motifs (2) Identifier of motifs (3) Information about motifs (same as the input parameter 'motifs')
     """   
     pssm_list = [[m_id,motifs[m_id]['pssm'][0]] for m_id in motifs]
     bg_GC = GC_content/2
     bg_AT = 0.5-bg_GC
-    # log_bg_gc, log_bg_at = log(bg_GC), log(bg_AT)
     dic_bg = {"A":bg_AT, "C":bg_GC, "G":bg_GC, "T":bg_AT, "N": 0.25}
     seq_len, all_cnt = len(str(seq_record_list[0].seq)), len(seq_record_list)
 
@@ -68,21 +69,36 @@ def summary_score(seq_record_list,GC_content,motifs):
                win_list[m_len] = {}
                win_start = range(0,seq_len-m_len+1)
                win_list[m_len]['win_seq'] = _wipe_mask(_slice_seq(win_start, m_len, seq_str))
+               # generate the windows of the sequence to calculate PSSM's score
                win_list[m_len]['win_bg'] = seq_bg(seq_str, dic_bg, m_len)
-
+               # calculate the bg score
             win_S=[]
             for i,win_bg_s in zip(win_list[m_len]['win_seq'],win_list[m_len]['win_bg']):
                 win_mtf_s=win_motif(i,pssm,m_len)
+                # calculate the PSSM score                
                 win_S_s=win_mtf_s/win_bg_s
-                win_S.append(win_S_s if win_S_s>1000 else 0)
+                win_S.append(win_S_s if win_S_s>cutoff else 0)
+                # cut the low values off
             mult_m_win_S.append(win_S)
             
         seq_SS.append([seq_record.id,[log(max(sum(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
+        # to avoid log0 error, this may have an affect similar to the cutoff
     motif_id = [i[0] for i in pssm_list]
     return (seq_SS,motif_id,motifs)
 
 
 def seq_bg(seq_str, dic_bg, win_len):
+    """
+    Calculate the likelihood of every window of a given sequence in the background model.
+    
+    @type  seq_str: str
+    @param : The string of nucleotides of the sequence
+    @type  dic_bg: dict
+    @param dic_bg: The dict should look like this :{"A":pr_bg_a, "C":pr_bg_c, "G":pr_bg_g, "T":pr_bg_t,"N":pr_anyvalue }
+    @type  win_len: int
+    @param win_len: the length of the windows
+    
+    """      
     bg_list = [dic_bg[i] for i in seq_str]
     win_start = range(0, len(seq_str)-win_len+1)
     win_bg_list = [reduce((lambda x,y:x*y),bg_list[i:i+win_len]) for i in win_start if "N" not in seq_str[i:i+win_len]]
@@ -91,7 +107,7 @@ def seq_bg(seq_str, dic_bg, win_len):
 
 def win_motif(win_str,m_pssm,m_len):
     """
-    Calculate the likelihood of a given sequence in the PSSM model.
+    Calculate the likelihood of a given window in the PSSM model.
     
     @type  win_str: str
     @param : The path of the fasta file of specify regions
@@ -109,20 +125,6 @@ def win_motif(win_str,m_pssm,m_len):
         rev_win_pr *= m_pssm[m_len-index-1][rev_convert[bp]]
     return max(pos_win_pr,rev_win_pr)
     
-def win_bg(win_str,dic_bg):
-    """
-    Calculate the likelihood of a given sequence in the background model.
-    
-    @type  win_str: str
-    @param : The path of the fasta file of specify regions
-    @type  dic_bg: dict
-    @param dic_bg: The dict should look like this :{"A":log_bg_a, "C":log_bg_c, "G":log_bg_g, "T":log_bg_t}
-    """   
-    bg_score=0.0
-    for i in win_str:
-        bg_score += dic_bg[i]
-    return bg_score
-
 def consensus(pssm):
     """
     Get the consensus of a motif from its PSSM

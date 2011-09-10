@@ -1,3 +1,18 @@
+#! /usr/bin/env python
+# Time-stamp: <2011-09-10 17:51:17 sunhf>
+"""Description: An executable for GC content viewing
+
+Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
+
+This code is free software; you can redistribute it and/or modify it
+under the terms of the BSD License (see the file COPYING included with
+the distribution).
+
+@status:  experimental
+@version: $Revision$
+@author:  Hanfei Sun
+@contact: hfsun.tju@gmail.com
+"""
 import sys
 import fse.seq_pssm_io as io
 

@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-09 18:18:42 sunhf>
+# Time-stamp: <2011-09-10 14:17:22 sunhf>
 
 """Description: An executable for motif score comparing for left,right and middle regions.
 
@@ -16,7 +16,7 @@ the distribution).
 """
 import sys
 import os.path as P
-from math import log10
+from math import log10,trunc
 from pprint import pprint
 import mf_corelib as corelib
 
@@ -43,7 +43,7 @@ r = rpy.r
 _name_p = lambda prefix_, part, suffix:prefix_+"_"+part+"."+suffix
 # produce a path name in the specified format
 
-def triple_SS_output(prefix, xml_file):
+def triple_SS_output(prefix, xml_file, cutoff=1000):
     """
     Run the pipeline from three region bed to three pickle files.
 
@@ -53,6 +53,8 @@ def triple_SS_output(prefix, xml_file):
     @param prefix: the prefix of the three bed file, for example, prefix 'dir/test' needs 'dir/test_left.bed','dir/test_middle.bed' and'dir/test_right.bed existing' 
     @type  xml_file: str
     @param xml_file: the xml file path contains information about the motifs
+    @type  cutoff: int
+    @param  cutoff: the cutoff of the likelihood quotient     
     @rtype:   tuple
     @return:  the paths of three pickle files that stores information of summary scores in three regions(left, middle, right) and motifs' description
     """       
@@ -68,7 +70,7 @@ def triple_SS_output(prefix, xml_file):
     for fa, part in fa_to_part:
         seq_record = SPI.fetch_seq_record(fa)
         seq_gc = SPI.fetch_GC_percent(seq_record)
-        result = SS.summary_score(seq_record, seq_gc, mtf)
+        result = SS.summary_score(seq_record, seq_gc, mtf, cutoff)
         SS.output_record_pickle(output_file=part_pkl(part), *result)
         SS.output_SS_txt(output_file=curr_name(part, "txt"), *result)
         if part =="middle": 
@@ -137,29 +139,52 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
         md_col = fetch_col(middle_SS['s_SS'], col)
         rt_col = fetch_col(right_SS['s_SS'], col)
         r["options"](warn=-1)
-        # a = r["binom.test"](r["sum"](lt_col+rt_col, md_col))
-        a = r["wilcox.test"](lt_col+rt_col, md_col,al="two.sided")
-        if str(a['p.value']) == 'nan':
-            a['p.value'] = 1.0
-        elif a['p.value'] == 0.0:
-            a['p.value'] = 1e-300
+        # bnm = r["binom.test"](r["sum"](lt_col+rt_col, md_col))
+        wcx = r["wilcox.test"](lt_col+rt_col, md_col,al="two.sided")
+
+        up_limit = max([max(i) for i in (lt_col,md_col,rt_col)])+0.1
+        width = up_limit/4.0
+        bins=[0,width,2*width,3*width,up_limit]
+        bin_lt = [0]*5
+        bin_md = bin_lt[:]
+        bin_rt = bin_lt[:]
+        
+        for lt,md,rt in zip(lt_col,md_col,rt_col):
+            lt /= width
+            md /= width
+            rt /= width
+            bin_lt[int(lt)]+=1
+            bin_md[int(md)]+=1
+            bin_rt[int(rt)]+=1
+        try:    
+            csq_left = r['chisq.test'](bin_lt[:4],bin_md[:4])
+            csq_right = r['chisq.test'](bin_rt[:4],bin_md[:4])
+        except:
+            raise
+        for pr in (wcx,csq_left,csq_right):
+            if str(pr['p.value']) == 'nan':
+                pr['p.value'] = 1.0
+            elif pr['p.value'] == 0.0:
+                pr['p.value'] = 1e-300
+        csq_p = {'p.value':max(csq_left['p.value'], csq_right['p.value'])}
         center_mean = r['mean'](md_col)
         twoside_mean = r['mean'](lt_col+rt_col)
         dic_item = {"mtf_id":m_id,
-                    "-log10p":-10*log10(a['p.value']),
+                    "csq_-log10p":-10*log10(csq_p['p.value']),
+                    "-log10p":-10*log10(wcx['p.value']),
                     "middle_mean":center_mean,
                     "twoside_mean":twoside_mean,
                     "diff":center_mean-twoside_mean,
                     "mtf_dbd":mtf_info[m_id]['dbd'],
                     "mtf_type":mtf_info[m_id]['description'],
                     "mtf_name":mtf_info[m_id]['synonym'],
-                    "p.value":a['p.value'],
+                    "p.value":wcx['p.value'],
                     }
         metric_list.append(dic_item)
-    pvalues = [i['p.value'] for i in metric_list]
-    fdrs = r['p.adjust'](pvalues,method="fdr")
-    for i,element in enumerate(metric_list):
-        element['fdr']=fdrs[i]
+    # pvalues = [i['p.value'] for i in metric_list]
+    # fdrs = r['p.adjust'](pvalues,method="fdr")
+    # for i,element in enumerate(metric_list):
+    #     element['fdr']=fdrs[i]
     return metric_list
 
 def dist_graph(metric_list , prefix):
@@ -205,7 +230,7 @@ def sig_test_output_txt(metric_list, prefix):
         f.write(lines)
     info("%s has been output successfully!"%output_file)
     
-def sig_test_output_html(metric_list, prefix,cutoff=1e-10):
+def sig_test_output_html(metric_list, prefix,c_cutoff=1e-10):
     """
     Store the information of the result of the significance test to a colored verbose 8-column html file.
 
@@ -217,6 +242,8 @@ def sig_test_output_html(metric_list, prefix,cutoff=1e-10):
     @param metric_list: contains information of score matrics representing significance of difference and mean values for every region
     @type  prefix: str
     @param prefix: the prefix for output the html file, for example, prefix 'dir/test' will output to 'dir/test_metric.html'
+    @type c_cutoff: float
+    @param c_cutoff: the cutoff of the significance test    
     """              
     output_file = _name_p(prefix, "metric", "html")
     tplt = ho.html_template()
@@ -230,11 +257,11 @@ def sig_test_output_html(metric_list, prefix,cutoff=1e-10):
     stradd = lambda *args:reduce(lambda s1, s2:s1+s2, args)
     nj = lambda x:"\n".join(x)
     cj = lambda x:", ".join(x)
-    select_keys = lambda i:[i["mtf_id"],i["-log10p"],i["fdr"],i["middle_mean"],
+    select_keys = lambda i:[i["mtf_id"],i["-log10p"],i["csq_-log10p"],i["middle_mean"],
                             i["twoside_mean"],i["diff"],
                             cj(i["mtf_dbd"]) if i["mtf_dbd"]!=[] else "N/A",
                             cj(i["mtf_type"]),cj(i["mtf_name"])]
-    def auto_color(metric_list, cutoff):
+    def auto_color(metric_list, c_cutoff):
         """
         Generate colorful lines for html.
 
@@ -243,14 +270,14 @@ def sig_test_output_html(metric_list, prefix,cutoff=1e-10):
         color_list = []
         for i in sorted(metric_list,key=lambda i:(i['-log10p'],i['mtf_id']),
                         reverse=True):
-            if i["-log10p"]>cutoff:
+            if i["-log10p"]>c_cutoff:
                 color_list.append(nice_line_a(select_keys(i)) if i["diff"]>0
                                   else nice_line_b(select_keys(i)))
             else:
                 color_list.append(line(select_keys(i)))
         return color_list
-    txt = fst(["motif id", "-10log10(pvalue) (Wilcoxon test)","naive fdr",
-               "mean of center", "mean of left and right","middle - edge",
+    txt = fst(["motif id", "-10log10(pvalue) (Wilcoxon test)","-10log10(pvalue) (Chi-square test)",
+               "mean of center", "mean of left and right","middle - side",
                " motif dbd name", "motif type","motif names"])
     txt += nj(auto_color(metric_list, 5))
     with open(output_file, 'w') as f:
@@ -259,7 +286,7 @@ def sig_test_output_html(metric_list, prefix,cutoff=1e-10):
     
     info("%s has been output successfully!"%output_file)
     
-def main(prefix, motif_xml_file, continue_=False):
+def main(prefix, motif_xml_file, cutoff=1000, continue_=False):
     """
     Run the pipeline for motif scan and summary score comparing,testing on THREE regions.
 
@@ -269,6 +296,8 @@ def main(prefix, motif_xml_file, continue_=False):
     @param prefix: the prefix of the three bed file, for example, prefix 'dir/test' needs 'dir/test_left.bed','dir/test_middle.bed' and'dir/test_right.bed existing'
     @type  motif_xml_file: str
     @param motif_xml_file: the xml file path contains information about the motifs
+    @type  cutoff: int
+    @param  cutoff: the cutoff of the likelihood quotient     
     @type  continue_: bool
     @param  continue_: whether to continue from existing pickle files, if true, needs prefix+"_left.pkl", prefix+"_middle.pkl", prefix+"_right.pkl" existing.
     """    

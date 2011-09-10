@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 03:30:53 sunhf>
+# Time-stamp: <2011-09-10 09:11:44 sunhf>
 """Module Description: Main executable for converting summits bed to fasta files
 
 Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
@@ -109,6 +109,8 @@ def three_regions(bf_summit,bf_prefix=None,shiftsize=100):
     cmd="awk -v OFS='\t' '$2=$2-%d,$3=$3-%d' %s > %s"%(shiftsize*3,shiftsize+1,bf_tag("summits_filtered"),bf_tag("left"))
     run(cmd)
     cmd="awk -v OFS='\t' '$2=$2+%d,$3=$3+%d' %s > %s"%(shiftsize,shiftsize*3-1,bf_tag("summits_filtered"),bf_tag("right"))
+    run(cmd)
+    cmd="rm %s"%bf_tag("summits_filtered")
     run(cmd)
     return {"middle":bf_tag("middle"),"left":bf_tag("left"),"right":bf_tag("right")}
 
