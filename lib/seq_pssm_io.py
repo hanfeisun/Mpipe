@@ -18,9 +18,9 @@ import sys
 from Bio import SeqIO
 from Bio.Alphabet import IUPAC
 from Bio import Motif
-from fse.check_file import check_xml,check_fasta_dna
-import fse.MotifParser as MP
-from fse.mf_corelib import error
+from check_file import check_xml,check_fasta_dna
+import MotifParser as MP
+from mf_corelib import error
 
 _alphabet = IUPAC.unambiguous_dna
 
