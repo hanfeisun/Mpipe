@@ -36,8 +36,6 @@ def summary_score(seq_record_list,GC_content,motifs,cutoff=1000):
         seq_SS.append([seq_record.id,[log(max(sum(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
         # to avoid log0 error, this may have an affect similar to the cutoff
     motif_id = [i[0] for i in pssm_list]
-    print seq_SS
-    
     return (seq_SS,motif_id,motifs)
 
 def win_bg(char* win_str, float bg_at,float bg_gc):
