@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 09:11:44 sunhf>
+# Time-stamp: <2011-11-28 06:18:11 hanfei>
 """Module Description: Main executable for converting summits bed to fasta files
 
 Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
@@ -18,17 +18,26 @@ import sys
 import mf_corelib
 from check_file import check_bed,check_cmd,count_lines
 
-_fa_list=["chr%s.fa.masked"%_i for _i in range(1,23)+['X','Y']]
-_chrom_len={'chr1': 249250621, 'chr2': 243199373, 'chr3': 198022430,
-                'chr4': 191154276, 'chr5': 180915260, 'chr6': 171115067,
-                'chr7': 159138663, 'chrX': 155270560, 'chr8': 146364022,
-                'chr9': 141213431, 'chr10': 135534747, 'chr11': 135006516,
-                'chr12': 133851895, 'chr13': 115169878, 'chr14': 107349540,
-                'chr15': 102531392, 'chr16': 90354753, 'chr17': 81195210,
-                'chr18': 78077248, 'chr20':63025520, 'chrY': 59373566,
-                'chr19': 59128983, 'chr22': 51304566, 'chr21': 48129895}
+_fa_list={"hg19": ["chr%s.fa.masked"%_i for _i in range(1,23)+['X','Y']],
+          "mm9":["chr%s.fa.masked"%_i for _i in range(1,20)+['X','Y']]}
+_chrom_len={"hg19":{'chr1': 249250621, 'chr2': 243199373, 'chr3': 198022430,
+                    'chr4': 191154276, 'chr5': 180915260, 'chr6': 171115067,
+                    'chr7': 159138663, 'chrX': 155270560, 'chr8': 146364022,
+                    'chr9': 141213431, 'chr10': 135534747, 'chr11': 135006516,
+                    'chr12': 133851895, 'chr13': 115169878, 'chr14': 107349540,
+                    'chr15': 102531392, 'chr16': 90354753, 'chr17': 81195210,
+                    'chr18': 78077248, 'chr20':63025520, 'chrY': 59373566,
+                    'chr19': 59128983, 'chr22': 51304566, 'chr21': 48129895},
+            "mm9":{'chr1': 197195432, 'chr2': 181748087, 'chr3': 159599783,
+                   'chr4': 155630120, 'chr5': 152537259, 'chr6': 149517037,
+                   'chr7': 152524553, 'chr8': 131738871, 'chr9': 124076172,
+                   'chr10': 129993255, 'chr11': 121843856, 'chr12': 121257530,
+                   'chr13': 120284312, 'chr14': 125194864, 'chr15': 103494974,
+                   'chr16': 98319150, 'chr17': 95272651, 'chr18': 90772031,
+                   'chr19': 61342430, 'chrX': 166650296, 'chrY': 15902555,}}
 # _fa_list and chrom_len are only for hg19
-_fasta_default="./hg19.fa"
+_fasta_default={'hg19': "./hg19.fa",
+                'mm9': "./mm9.fa"}
 
 run=mf_corelib.run_cmd
 run_P=mf_corelib.run_cmd_PIPE
@@ -69,7 +78,7 @@ def top_peaks(bf_i,bf_prefix,top_peaks_number):
     run(cmd)
     return bf_o
 
-def three_regions(bf_summit,bf_prefix=None,shiftsize=100):
+def three_regions(bf_summit,bf_prefix=None,shiftsize=100,species="hg19"):
     """
     Generate three new bed files which are left,middle and right 200bp regions of the input summits bed file.
 
@@ -92,7 +101,7 @@ def three_regions(bf_summit,bf_prefix=None,shiftsize=100):
 
     one_chr = lambda chrom,chrom_leng:r"(/^("+chrom+r"\t)/ && $2-%d>0 && $3+%d<"%(shiftsize*3,shiftsize*3)+str(chrom_leng-300)+r")"
     # summit +/-300 is the edge as 200bp is the width
-    awk_pattern = "'" + " || ".join(one_chr(i,_chrom_len[i]) for i in _chrom_len ) + "'"
+    awk_pattern = "'" + " || ".join(one_chr(i,_chrom_len[species][i]) for i in _chrom_len[species] ) + "'"
     cmd="awk %s %s > %s"%(awk_pattern, bf_summit, bf_tag("summits_filtered"))
     run(cmd)
     # If a summit may generate region of illegal chromosome range, filter it out.
@@ -138,7 +147,7 @@ def bed2fasta(bf_i,ff_i,ff_o=None):
         error("fastaFromBed failed, this may caused by illegal chromesome range")
     return ff_o
 
-def main(bf_i,bf_o_prefix,ff_i=None,top_peaks_number=3000,shiftsize=100):
+def main(bf_i,bf_o_prefix,ff_i=None,top_peaks_number=3000,shiftsize=100,species="hg19"):
     """
     Run the whole pipeline for the conversion from one bed file to three fasta files in left,middle and right regions.
 
@@ -181,15 +190,15 @@ def main(bf_i,bf_o_prefix,ff_i=None,top_peaks_number=3000,shiftsize=100):
         ff_i=ff_i+'/' if ff_i[:-1]!='/' else ff_i
         # If there isn't a '/' at the end of the dir path, add it.
         
-        ff_i=[ff_i + one_file for one_file in _fa_list]
-        _cat_fa(ff_i,_fasta_default)
+        ff_i=[ff_i + one_file for one_file in _fa_list[species]]
+        _cat_fa(ff_i,_fasta_default[species])
         
-        ff_i=_fasta_default
+        ff_i=_fasta_default[species]
     run("mkdir %s"%bf_o_prefix)
     output_dir=bf_o_prefix+"/"
     
     Bf_top = top_peaks(bf_i,bf_o_prefix,top_peaks_number)
-    Bf_regions = three_regions(Bf_top,bf_o_prefix,shiftsize)
+    Bf_regions = three_regions(Bf_top,bf_o_prefix,shiftsize,species)
     # generate 7 files (three regions' bed and fasta, a top3000 bed)
     
     Ff_regions={}
