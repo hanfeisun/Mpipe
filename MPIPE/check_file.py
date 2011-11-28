@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-28 08:08:59 hanfei>
+# Time-stamp: <2011-11-28 21:17:14 root>
 
 """Module Description: Check integrity of input bed,xml and fasta files.
 
@@ -88,7 +88,7 @@ def check_bed(fname,check_3col_bed=True):
             if is_5col_bed(last_line):
                 print "Check %s successfully!"%fname
                 return True
-            else
+            else:
                 if check_3col_bed:
                     if  is_3col_bed(last_line):
                         warn("You input a 3 column bed file like this:\t\t%s"%last_line[:50])
