@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-23 16:40:05 sunhf>
+# Time-stamp: <2011-11-28 05:42:52 hanfei>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -17,8 +17,8 @@ the distribution).
 import sys
 import os
 from optparse import OptionParser
-import MPIPE.bed2fasta
-import MPIPE.triple_SS
+import MPIPE.bed2fasta as bed2fasta
+import MPIPE.triple_SS as triple_SS
 import MPIPE.check_file as ck
 from MPIPE.mf_corelib import error,info
 def prepare_optparser():
