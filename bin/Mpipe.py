@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 09:06:03 sunhf>
+# Time-stamp: <2011-11-23 16:40:05 sunhf>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -17,10 +17,10 @@ the distribution).
 import sys
 import os
 from optparse import OptionParser
-import fse.bed2fasta
-import fse.triple_SS
-import fse.check_file as ck
-from fse.mf_corelib import error,info
+import MPIPE.bed2fasta
+import MPIPE.triple_SS
+import MPIPE.check_file as ck
+from MPIPE.mf_corelib import error,info
 def prepare_optparser():
 
     """
@@ -53,7 +53,10 @@ def prepare_optparser():
     if not os.path.isdir(options.genome) and not os.path.isfile(options.genome):
         error("Cannot find the path of genome assembly, a path of genome must be given through -g (--genome).")
         sys.exit(1)
-        
+    elif os.path.isfile(options.genome):
+        if not ck.check_fasta_dna(options.genome):
+            error("The input genome validation failed, please check your -g options")
+            sys.exit(1)
     if not os.path.isfile(options.bed_file):
         error("Cannot find the peak summits file, a tab-peak-summit file must be given through -b (--bed).")
         sys.exit(1)
@@ -66,6 +69,7 @@ def prepare_optparser():
         sys.exit(1)
     elif ck.check_xml(options.motif_xml) == False:
         error("Xml file %s validation failed"%options.motif_xml)
+        sys.exit(1)
     if options.n_top_percent:
         if options.n_top_percent<1 or options.n_top_percent>100:
             error("Please input a value between 1 and 100 for -p option")

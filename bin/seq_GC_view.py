@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 17:51:17 sunhf>
+# Time-stamp: <2011-11-23 16:51:37 sunhf>
 """Description: An executable for GC content viewing
 
 Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
@@ -14,7 +14,7 @@ the distribution).
 @contact: hfsun.tju@gmail.com
 """
 import sys
-import fse.seq_pssm_io as io
+import MPIPE.seq_pssm_io as io
 
 main=io.fasta_GC_main
 if __name__ == '__main__':
