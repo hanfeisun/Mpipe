@@ -1,6 +1,20 @@
 #! /usr/bin/env python
+# Time-stamp: <2011-11-23 16:51:21 sunhf>
+"""Description: An executable for motif pssm viewing
+
+Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
+
+This code is free software; you can redistribute it and/or modify it
+under the terms of the BSD License (see the file COPYING included with
+the distribution).
+
+@status:  experimental
+@version: $Revision$
+@author:  Hanfei Sun
+@contact: hfsun.tju@gmail.com
+"""
 import sys
-import fse.seq_pssm_io as io
+import MPIPE.seq_pssm_io as io
 
 main=io.fetch_pssm_xml
 

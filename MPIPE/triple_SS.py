@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 14:17:22 sunhf>
+# Time-stamp: <2011-09-30 11:24:27 sunhf>
 
 """Description: An executable for motif score comparing for left,right and middle regions.
 
@@ -33,6 +33,7 @@ except RuntimeError:
         sys.exit(1)
         
 import summary_score as SS
+import summary_c as SSc
 import seq_pssm_io as SPI
 import html_output as ho    
 
@@ -70,7 +71,7 @@ def triple_SS_output(prefix, xml_file, cutoff=1000):
     for fa, part in fa_to_part:
         seq_record = SPI.fetch_seq_record(fa)
         seq_gc = SPI.fetch_GC_percent(seq_record)
-        result = SS.summary_score(seq_record, seq_gc, mtf, cutoff)
+        result = SSc.summary_score(seq_record, seq_gc, mtf, cutoff)
         SS.output_record_pickle(output_file=part_pkl(part), *result)
         SS.output_SS_txt(output_file=curr_name(part, "txt"), *result)
         if part =="middle": 
@@ -135,12 +136,26 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
             print "motifs test progress: %.1f"%(col/float(mtf_count)*100)
 
         m_id=left_SS['m_id'][col]
-        lt_col = fetch_col(left_SS['s_SS'], col)    
+        try:
+            lt_col = fetch_col(left_SS['s_SS'], col)
+        except:
+            print left_SS['s_SS']
+            print col
+            print len(left_SS['s_SS'])
+            print left_SS['s_SS'][1][1]
+            sys.exit(1)
         md_col = fetch_col(middle_SS['s_SS'], col)
         rt_col = fetch_col(right_SS['s_SS'], col)
         r["options"](warn=-1)
         # bnm = r["binom.test"](r["sum"](lt_col+rt_col, md_col))
         wcx = r["wilcox.test"](lt_col+rt_col, md_col,al="two.sided")
+        center_mean = r['mean'](md_col)
+        twoside_mean = r['mean'](lt_col+rt_col)
+        if center_mean==0 or twoside_mean==0:
+            if center_mean==twoside_mean:
+                wcx={'p.value':1}
+            else:
+                wcx={'p.value':0.5} # fix the bias caused by cutoff
 
         up_limit = max([max(i) for i in (lt_col,md_col,rt_col)])+0.1
         width = up_limit/4.0
@@ -153,22 +168,25 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
             lt /= width
             md /= width
             rt /= width
-            bin_lt[int(lt)]+=1
-            bin_md[int(md)]+=1
-            bin_rt[int(rt)]+=1
+            bin_lt[max(int(lt),0)]+=1
+            bin_md[max(int(md),0)]+=1
+            bin_rt[max(int(rt),0)]+=1
         try:    
             csq_left = r['chisq.test'](bin_lt[:4],bin_md[:4])
             csq_right = r['chisq.test'](bin_rt[:4],bin_md[:4])
         except:
-            raise
+            if bin_lt==bin_md:
+                csq_left = {'p.value':1.0}
+            if bin_rt==bin_md:
+                csq_right = {'p.value':1.0}
+            if bin_rt!=bin_md and bin_lt!=bin_md:
+                raise
         for pr in (wcx,csq_left,csq_right):
             if str(pr['p.value']) == 'nan':
                 pr['p.value'] = 1.0
             elif pr['p.value'] == 0.0:
                 pr['p.value'] = 1e-300
         csq_p = {'p.value':max(csq_left['p.value'], csq_right['p.value'])}
-        center_mean = r['mean'](md_col)
-        twoside_mean = r['mean'](lt_col+rt_col)
         dic_item = {"mtf_id":m_id,
                     "csq_-log10p":-10*log10(csq_p['p.value']),
                     "-log10p":-10*log10(wcx['p.value']),

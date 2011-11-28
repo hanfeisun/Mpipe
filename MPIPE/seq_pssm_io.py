@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-10 01:33:35 sunhf>
+# Time-stamp: <2011-09-29 19:34:46 sunhf>
 
 """Module Description: Module for inputing fasta and xml file.
 
@@ -59,8 +59,8 @@ def fetch_seq_record(fasta_file, alpha=_alphabet):
     if not check_fasta_dna(fasta_file):
         error("fasta file validation failed")
         sys.exit(1)
-    raw_seq_list = list(SeqIO.parse(fasta_file, "fasta", alpha))
-    return raw_seq_list
+    raw_seq_list = SeqIO.parse(fasta_file, "fasta", alpha)
+    return list(raw_seq_list)
 
 def fetch_GC_percent(seq_list, alpha=_alphabet, region_width=200):
     """

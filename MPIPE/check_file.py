@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-09 14:39:29 sunhf>
+# Time-stamp: <2011-11-11 16:52:22 sunhf>
 
 """Module Description: Check integrity of input bed,xml and fasta files.
 
@@ -16,6 +16,7 @@ the distribution).
 """
 import os
 import sys
+from subprocess import call as subcall
 import re
 from xml.etree.ElementTree import ElementTree
 from mf_corelib import info,error,warn
@@ -81,7 +82,7 @@ def check_bed(fname):
         if not re.search(bed_pattern,last_line):
             error("The input bed file %s has a wrong format!"%fname)
             print "Wrong Format:\t\t\t%s"%last_line[:50]
-            print "Right Format:\t%s"%('chr1\t567577\t567578\tMACS_peak_1\t119.00')
+            print "Right Format should look like:\t%s"%('chr1\t567577\t567578\tMACS_peak_1\t119.00')
             return False
         else:
             print "Check %s successfully!"%fname
@@ -137,6 +138,7 @@ def check_fasta_dna(fname):
     """                           
     if not check_common(fname,".fa",maxsize=10737418240): # 10G=10*1024^3=10737418240
         return False
+    print fname
     with open(fname) as fasta_f:
         first_line = fasta_f.readline()
         if not first_line[0] == ">":
@@ -163,9 +165,12 @@ def check_cmd(command_):
     @rtype:   bool
     @return:  whether the command passed the check
     """    
-    exit_code=os.system(command_)
-    print "-"*10+"check command %s"%command_ + "-"*10
-    if exit_code==32512:        # when command not found, exit_code is 32512
+    exit_code=subcall(command_, shell=True, stdout=-1, stderr=-1)
+    # Get the exit code without printing standard output
+    
+    print ("check command %s"%command_).center(30,"-")
+
+    if exit_code==127:        # when command not found, exit_code is 127
         error("No such command as '%s'"%command_)
         return False
     else:
