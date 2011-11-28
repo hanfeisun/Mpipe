@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-11 16:52:22 sunhf>
+# Time-stamp: <2011-11-28 08:08:59 hanfei>
 
 """Module Description: Check integrity of input bed,xml and fasta files.
 
@@ -19,7 +19,7 @@ import sys
 from subprocess import call as subcall
 import re
 from xml.etree.ElementTree import ElementTree
-from mf_corelib import info,error,warn
+from mf_corelib import info,error,warn,run_cmd
 
 
 def count_lines(fname):
@@ -62,13 +62,14 @@ def check_common(fname,suffix,maxsize=1073741824): # 1GB=1024^3=1073741824B
         warn("Your input file %s doesn't have the suffix %s"%(fname,suffix))
     return True
     
-def check_bed(fname):
+def check_bed(fname,check_3col_bed=True):
     """
     Check if a file has the format of bed
 
     @type  fname: str
     @param fname: path of the file to be checked
-    
+    @type  check_3col_bed: bool
+    @param check_3col_bed: whether to check 3 column bed in addition to normal 5 column bed
     @rtype:   bool
     @return:  whether the file passed the bed check
     """                   
@@ -76,26 +77,37 @@ def check_bed(fname):
         return False
     with open(fname) as to_check:
         lines = to_check.readlines()
-        first_line = lines[0]
-        last_line = lines[-1]
-        bed_pattern = "chr\S+\s\d+\s\d+\s\S+\s\d+[.]*[\d]*"
-        if not re.search(bed_pattern,last_line):
-            error("The input bed file %s has a wrong format!"%fname)
-            print "Wrong Format:\t\t\t%s"%last_line[:50]
-            print "Right Format should look like:\t%s"%('chr1\t567577\t567578\tMACS_peak_1\t119.00')
-            return False
-        else:
-            print "Check %s successfully!"%fname
-            return True
-        if not re.search(bed_pattern,first_line):
-            error("The input bed file %s has a wrong format!"%fname)
-            print "Wrong Format:\t\t\t%s"%first_line[:50]
-            print "Right Format should look like:\t%s"%('chr1\t567577\t567578\tMACS_peak_1\t119.00')
-            return False
-        else:
-            print "Check %s successfully!"%fname
-        return True
+        first_line,last_line = lines[0],lines[-1]
+        is_5col_bed = lambda a_line:re.search("chr\S+\s\d+\s\d+\s\S+\s\d+[.]*[\d]*",a_line)
+        is_3col_bed = lambda a_line:re.search("chr\S+\s\d+\s\d+",a_line)
 
+        suffix_5col = lambda a_file: a_file+".5col"
+        threetofive = lambda a_3col_file: run_cmd(" ".join("awk '{i++;printf("+'"%s\tunknown_peak_%d\t1.0\n"'+",$0,i)}'",
+                                                           fname, ">", suffix_5col(fname)))
+        def check_a_line(a_line):
+            if is_5col_bed(last_line):
+                print "Check %s successfully!"%fname
+                return True
+            else
+                if check_3col_bed:
+                    if  is_3col_bed(last_line):
+                        warn("You input a 3 column bed file like this:\t\t%s"%last_line[:50])
+                        threetofive(fname)
+                        info("Please use the %s instead of %s as the input BED file and run your main script again"%(fname,suffix_5col(fname)))
+                    else:
+                        error("The input bed file %s has a wrong format!(3 column checking active)"%fname)
+                        print "Wrong Format:\t\t\t%s"%last_line[:50]
+                        print "Right Format should look like:\t%s"%('chr1\t567577\t567578\tMACS_peak_1\t119.00')
+                        print "Or the depreciate 3-column format like this:\t%s"%('chr1\t567577\t567578')
+                else:
+                    error("The input bed file %s has a wrong format!"%fname)
+                    print "Wrong Format:\t\t\t%s"%last_line[:50]
+                    print "Right Format should look like:\t%s"%('chr1\t567577\t567578\tMACS_peak_1\t119.00')
+                return False
+        if check_a_line(first_line) and check_a_line(last_line):
+            return True
+        else:
+            return False
     
 def check_xml(fname):
     """
