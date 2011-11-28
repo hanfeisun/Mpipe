@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-28 05:51:10 hanfei>
+# Time-stamp: <2011-11-28 07:06:16 hanfei>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -42,7 +42,7 @@ def prepare_optparser():
     optparser.add_option("-o","--name",type="str",dest="prefix_name",help="The name for this run, a directory will be created in this name in the current working directory, and the output file will all have a prefix of this name.")
     optparser.add_option("-c","--cutoff",dest = "cutoff",type = "int",help = "The cutoff of the quotient of two likelyhood to throw some bad motif scores. default=1000",default=1000) 
     optparser.add_option("-s","--shiftsize",dest = "shiftsize",type = "int",help = "Half of the region's length that you want to find the motif in. default=100",default=100)
-    optparser.add_option("-k","--kind",dest = "kind",type = "str",help = "What kind of Genome version to use. default=hg19",default="hg19")
+    optparser.add_option("-k","--genomeversion",dest = "kind",type = "str",help = "What kind of Genome version to use. 'hg19' and 'mm9' available now. default=hg19",default="hg19")
     
     (options,args) = optparser.parse_args()
 
