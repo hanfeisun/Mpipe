@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-28 21:17:14 root>
+# Time-stamp: <2011-11-28 21:53:54 root>
 
 """Module Description: Check integrity of input bed,xml and fasta files.
 
@@ -81,19 +81,22 @@ def check_bed(fname,check_3col_bed=True):
         is_5col_bed = lambda a_line:re.search("chr\S+\s\d+\s\d+\s\S+\s\d+[.]*[\d]*",a_line)
         is_3col_bed = lambda a_line:re.search("chr\S+\s\d+\s\d+",a_line)
 
-        suffix_5col = lambda a_file: a_file+".5col"
-        threetofive = lambda a_3col_file: run_cmd(" ".join("awk '{i++;printf("+'"%s\tunknown_peak_%d\t1.0\n"'+",$0,i)}'",
-                                                           fname, ">", suffix_5col(fname)))
+        suffix_5col = lambda a_file: a_file+".5c.bed"
+        def threetofive(fname):
+            with open(suffix_5col(fname),'w') as three2five_coled:
+                for line_num,a_line in enumerate(open(fname)):
+                    a_line=a_line.strip()+"\tunknown_peak_%d\t1.0\n"%line_num
+                    three2five_coled.write(a_line)
         def check_a_line(a_line):
             if is_5col_bed(last_line):
-                print "Check %s successfully!"%fname
                 return True
             else:
                 if check_3col_bed:
                     if  is_3col_bed(last_line):
                         warn("You input a 3 column bed file like this:\t\t%s"%last_line[:50])
+                        info("[3 Column to 5 Column] %s ==> %s "%(suffix_5col(fname),fname))                                                
                         threetofive(fname)
-                        info("Please use the %s instead of %s as the input BED file and run your main script again"%(fname,suffix_5col(fname)))
+                        info("Use %s instead of %s as the input BED and run the executive Again"%(suffix_5col(fname),fname))
                     else:
                         error("The input bed file %s has a wrong format!(3 column checking active)"%fname)
                         print "Wrong Format:\t\t\t%s"%last_line[:50]
@@ -105,6 +108,7 @@ def check_bed(fname,check_3col_bed=True):
                     print "Right Format should look like:\t%s"%('chr1\t567577\t567578\tMACS_peak_1\t119.00')
                 return False
         if check_a_line(first_line) and check_a_line(last_line):
+            print "Check %s successfully!"%fname
             return True
         else:
             return False

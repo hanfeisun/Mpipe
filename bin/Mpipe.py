@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-28 07:06:16 hanfei>
+# Time-stamp: <2011-11-28 22:08:48 root>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -80,7 +80,7 @@ def prepare_optparser():
             
     info("Top %s peaks will be used"%options.n_top_peaks)
     
-    if options.n_top_peaks<=0 or options.n_top_peaks>100000:
+    if options.n_top_peaks<=0 or options.n_top_peaks>2000000:
         error("Please choose a reasonable number for top peaks.(it should be less than 10000 and more than 0)")
         sys.exit(1)
     
