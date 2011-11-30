@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-28 22:08:48 root>
+# Time-stamp: <2011-11-30 08:58:54 hanfei>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -43,7 +43,7 @@ def prepare_optparser():
     optparser.add_option("-c","--cutoff",dest = "cutoff",type = "int",help = "The cutoff of the quotient of two likelyhood to throw some bad motif scores. default=1000",default=1000) 
     optparser.add_option("-s","--shiftsize",dest = "shiftsize",type = "int",help = "Half of the region's length that you want to find the motif in. default=100",default=100)
     optparser.add_option("-k","--genomeversion",dest = "kind",type = "str",help = "What kind of Genome version to use. 'hg19' and 'mm9' available now. default=hg19",default="hg19")
-    
+    optparser.add_option("--debug",dest = "debug",action="store_true",help = "For debug only",default=False)    
     (options,args) = optparser.parse_args()
 
     
@@ -113,7 +113,7 @@ def main():
     # convert bed to fasta files on three regions
     dir_prefix = op.prefix_name+"/"+op.prefix_name
     # produce an absolute path with the prefix
-    triple_SS.main(dir_prefix, op.motif_xml,op.cutoff)
+    triple_SS.main(dir_prefix, op.motif_xml,op.cutoff,debug_=op.debug)
     # use the files in 'prefix' dir to calculate scores
 if __name__ == '__main__':
     try:

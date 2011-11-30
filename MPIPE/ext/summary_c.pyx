@@ -3,7 +3,7 @@ cdef extern from "math.h":
 _slice_seq = lambda start_points,width,raw_list:[raw_list[i:i+width] for i in start_points]
 _wipe_mask = lambda sliced_seq:[str(i) for i in sliced_seq if "N" not in i]
 
-def summary_score(seq_record_list,GC_content,motifs,cutoff=1000):
+def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False):
     pssm_list = [[m_id,motifs[m_id]['pssm'][0]] for m_id in motifs]
     bg_GC = GC_content/2
     bg_AT = 0.5-bg_GC
@@ -30,6 +30,13 @@ def summary_score(seq_record_list,GC_content,motifs,cutoff=1000):
                 # calculate the PSSM score
                 win_bg_s = win_bg(str(a_window),bg_AT,bg_GC)
                 win_S_s=win_mtf_s/win_bg_s
+                if debug_:
+                    print "win_mtf"
+                    print win_mtf_s
+                    print "win_bg"
+                    print win_bg_s
+                    print "win_S_s"
+                    print win_S_s
                 win_S.append(win_S_s if win_S_s>cutoff else 0)
                 # cut the low values off
             mult_m_win_S.append(win_S)

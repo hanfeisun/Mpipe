@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-09-30 11:24:27 sunhf>
+# Time-stamp: <2011-11-30 09:07:42 hanfei>
 
 """Description: An executable for motif score comparing for left,right and middle regions.
 
@@ -44,7 +44,7 @@ r = rpy.r
 _name_p = lambda prefix_, part, suffix:prefix_+"_"+part+"."+suffix
 # produce a path name in the specified format
 
-def triple_SS_output(prefix, xml_file, cutoff=1000):
+def triple_SS_output(prefix, xml_file, cutoff=1000,debug_=False):
     """
     Run the pipeline from three region bed to three pickle files.
 
@@ -71,7 +71,10 @@ def triple_SS_output(prefix, xml_file, cutoff=1000):
     for fa, part in fa_to_part:
         seq_record = SPI.fetch_seq_record(fa)
         seq_gc = SPI.fetch_GC_percent(seq_record)
-        result = SSc.summary_score(seq_record, seq_gc, mtf, cutoff)
+        print debug_
+        if debug_==True:
+            info("debug mode on")
+        result = SSc.summary_score(seq_record, seq_gc, mtf, cutoff,debug_)
         SS.output_record_pickle(output_file=part_pkl(part), *result)
         SS.output_SS_txt(output_file=curr_name(part, "txt"), *result)
         if part =="middle": 
@@ -304,7 +307,7 @@ def sig_test_output_html(metric_list, prefix,c_cutoff=1e-10):
     
     info("%s has been output successfully!"%output_file)
     
-def main(prefix, motif_xml_file, cutoff=1000, continue_=False):
+def main(prefix, motif_xml_file, cutoff=1000, continue_=False, debug_=False):
     """
     Run the pipeline for motif scan and summary score comparing,testing on THREE regions.
 
@@ -318,7 +321,8 @@ def main(prefix, motif_xml_file, cutoff=1000, continue_=False):
     @param  cutoff: the cutoff of the likelihood quotient     
     @type  continue_: bool
     @param  continue_: whether to continue from existing pickle files, if true, needs prefix+"_left.pkl", prefix+"_middle.pkl", prefix+"_right.pkl" existing.
-    """    
+    """
+    print debug_
     print "current motif file:"+motif_xml_file
     if continue_:
         triple_pkl = [_name_p(prefix,part,"pkl") for part in ("left","middle","right")]
@@ -327,7 +331,7 @@ def main(prefix, motif_xml_file, cutoff=1000, continue_=False):
                 error("No such pkl as %s! Please start from scratch"%one_pkl)
                 sys.exit(1)
     else:
-        triple_pkl = triple_SS_output(prefix, motif_xml_file)
+        triple_pkl = triple_SS_output(prefix, motif_xml_file,cutoff,debug_)
     (lt, md, rt) = triple_SS_input(*triple_pkl)
     result = sig_test(lt, md, rt,motif_xml_file)
     dist_graph(result,prefix)
