@@ -27,18 +27,24 @@ def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False):
             win_S=[]
             for a_window in win_list[m_len]['win_seq']:
                 win_mtf_s = win_motif(str(a_window),pssm)
+
                 # calculate the PSSM score
                 win_bg_s = win_bg(str(a_window),bg_AT,bg_GC)
-                win_S_s=win_mtf_s/win_bg_s
                 if debug_:
-                    print "win_mtf"
-                    print win_mtf_s
-                    print "win_bg"
-                    print win_bg_s
-                    print "win_S_s"
-                    print win_S_s
+                    if a_window=="TTACTTT":
+                        win_motif(str(a_window),pssm,debug_)                        
+                        print win_mtf_s
+                        print win_bg_s
+                win_S_s=win_mtf_s/win_bg_s
                 win_S.append(win_S_s if win_S_s>cutoff else 0)
                 # cut the low values off
+            if debug_:
+                print "pssm",
+                print pssm
+                print "win_list",
+                print win_list[m_len]['win_seq']
+                print "win_S",
+                print win_S
             mult_m_win_S.append(win_S)
         seq_SS.append([seq_record.id,[log(max(sum(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
         # to avoid log0 error, this may have an affect similar to the cutoff
@@ -58,23 +64,26 @@ def win_bg(char* win_str, float bg_at,float bg_gc):
             print "error"
     return pr
 
-def win_motif(char* win_str,m_pssm):
+def win_motif(char* win_str,m_pssm,debug_=False):
     cdef float pos_win_pr=1.0
     cdef float rev_win_pr=1.0
     for (index,bp) in enumerate(win_str):
         if bp=="A":
             pos_win_pr *= m_pssm[index][0]
-            rev_win_pr *= m_pssm[index][3]
+            rev_win_pr *= m_pssm[-index-1][3]
         elif bp=="C":
             pos_win_pr *= m_pssm[index][1]
-            rev_win_pr *= m_pssm[index][2]            
+            rev_win_pr *= m_pssm[-index-1][2]            
         elif bp=="G":
             pos_win_pr *= m_pssm[index][2]
-            rev_win_pr *= m_pssm[index][1]            
+            rev_win_pr *= m_pssm[-index-1][1]            
         elif bp=="T":
             pos_win_pr *= m_pssm[index][3]
-            rev_win_pr *= m_pssm[index][0]
-        
+            rev_win_pr *= m_pssm[-index-1][0]
+        if debug_:
+            print "current bp/index",
+            print index,bp
+            print pos_win_pr,rev_win_pr
     if pos_win_pr>rev_win_pr:
         return pos_win_pr
     else:

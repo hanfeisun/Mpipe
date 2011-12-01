@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-30 09:07:42 hanfei>
+# Time-stamp: <2011-11-30 09:49:02 hanfei>
 
 """Description: An executable for motif score comparing for left,right and middle regions.
 
@@ -158,7 +158,8 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
             if center_mean==twoside_mean:
                 wcx={'p.value':1}
             else:
-                wcx={'p.value':0.5} # fix the bias caused by cutoff
+                pass
+                # wcx={'p.value':0.5} # fix the bias caused by cutoff
 
         up_limit = max([max(i) for i in (lt_col,md_col,rt_col)])+0.1
         width = up_limit/4.0
