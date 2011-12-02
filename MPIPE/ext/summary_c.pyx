@@ -1,9 +1,11 @@
+import sys
 cdef extern from "math.h":
     float log(float theta)  
 _slice_seq = lambda start_points,width,raw_list:[raw_list[i:i+width] for i in start_points]
 _wipe_mask = lambda sliced_seq:[str(i) for i in sliced_seq if "N" not in i]
 
 def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False):
+    debug_stop_=False
     pssm_list = [[m_id,motifs[m_id]['pssm'][0]] for m_id in motifs]
     bg_GC = GC_content/2
     bg_AT = 0.5-bg_GC
@@ -30,23 +32,30 @@ def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False):
 
                 # calculate the PSSM score
                 win_bg_s = win_bg(str(a_window),bg_AT,bg_GC)
-                if debug_:
-                    if a_window=="TTACTTT":
-                        win_motif(str(a_window),pssm,debug_)                        
-                        print win_mtf_s
-                        print win_bg_s
+
                 win_S_s=win_mtf_s/win_bg_s
                 win_S.append(win_S_s if win_S_s>cutoff else 0)
                 # cut the low values off
-            if debug_:
-                print "pssm",
-                print pssm
-                print "win_list",
-                print win_list[m_len]['win_seq']
-                print "win_S",
-                print win_S
+                if debug_:
+                    if a_window=="AATGAAA":
+                        win_motif(str(a_window),pssm,debug_)
+                        print win_mtf_s
+                        print win_bg_s
+                        print win_S
+                        sys.exit()
+            # if debug_:
+            #     print "pssm",
+            #     print pssm
+            #     print "win_list",
+            #     print win_list[m_len]['win_seq']
+            #     print "win_S",
+            #     print win_S
             mult_m_win_S.append(win_S)
+            if debug_ and debug_stop_:
+                print mult_m_win_S
+                sys.exit()
         seq_SS.append([seq_record.id,[log(max(sum(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
+
         # to avoid log0 error, this may have an affect similar to the cutoff
     motif_id = [i[0] for i in pssm_list]
     return (seq_SS,motif_id,motifs)
