@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-28 21:53:54 root>
+# Time-stamp: <2011-12-02 08:12:30 hanfei>
 
 """Module Description: Check integrity of input bed,xml and fasta files.
 
@@ -70,8 +70,8 @@ def check_bed(fname,check_3col_bed=True):
     @param fname: path of the file to be checked
     @type  check_3col_bed: bool
     @param check_3col_bed: whether to check 3 column bed in addition to normal 5 column bed
-    @rtype:   bool
-    @return:  whether the file passed the bed check
+    @rtype:   dict
+    @return:  whether the file's type is peak or summit, whether thr file is 3-column or 5-column format bed
     """                   
     if not check_common(fname,".bed",maxsize=107341824):
         return False
@@ -79,7 +79,7 @@ def check_bed(fname,check_3col_bed=True):
         lines = to_check.readlines()
         first_line,last_line = lines[0],lines[-1]
         is_5col_bed = lambda a_line:re.search("chr\S+\s\d+\s\d+\s\S+\s\d+[.]*[\d]*",a_line)
-        is_3col_bed = lambda a_line:re.search("chr\S+\s\d+\s\d+",a_line)
+        is_3col_bed = lambda a_line:re.search("chr\S+\s\d+\s\d+$",a_line)
 
         suffix_5col = lambda a_file: a_file+".5c.bed"
         def threetofive(fname):

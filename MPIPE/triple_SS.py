@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-30 09:49:02 hanfei>
+# Time-stamp: <2011-12-02 07:27:13 hanfei>
 
 """Description: An executable for motif score comparing for left,right and middle regions.
 
@@ -68,9 +68,14 @@ def triple_SS_output(prefix, xml_file, cutoff=1000,debug_=False):
     lt_fa, md_fa, rt_fa = (part_fa(i) for i in("left", "middle", "right"))
     fa_to_part = zip((lt_fa, rt_fa, md_fa), 
                    ("left", "right", "middle"))
+
+    seq_gc_dict={}
     for fa, part in fa_to_part:
         seq_record = SPI.fetch_seq_record(fa)
-        seq_gc = SPI.fetch_GC_percent(seq_record)
+        seq_gc_dict[part] = SPI.fetch_GC_percent(seq_record)
+    seq_gc=sum(seq_gc_dict.values())/3
+        
+    for fa, part in fa_to_part:        
         print debug_
         if debug_==True:
             info("debug mode on")
