@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-28 07:02:40 hanfei>
+# Time-stamp: <2011-12-03 10:37:13 sunhf>
 """Module Description: Main executable for converting summits bed to fasta files
 
 Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
@@ -100,8 +100,7 @@ def three_regions(bf_summit,bf_prefix=None,shiftsize=100,species="hg19"):
     if bf_prefix==None:
         bf_prefix=_get_prefix(bf_summit)
     bf_tag=lambda tag:bf_prefix+'_'+tag+'.bed'
-
-    one_chr = lambda chrom,chrom_leng:r"(/^("+chrom+r"\t)/ && $2-%d>0 && $3+%d<"%(shiftsize*3,shiftsize*3)+str(chrom_leng-300)+r")"
+    one_chr = lambda chrom,chrom_leng:r"(/^("+chrom+r"\t)/ && $2-%d>0 && $3+%d<"%(shiftsize*3,shiftsize*3)+str(chrom_leng)+" && $2*2-$3>0 && $3*2-$2<"+str(chrom_leng)+r")"
     # summit +/-300 is the edge as 200bp is the width
     awk_pattern = "'" + " || ".join(one_chr(i,_chrom_len[species][i]) for i in _chrom_len[species] ) + "'"
     cmd="awk %s %s > %s"%(awk_pattern, bf_summit, bf_tag("summits_filtered"))
@@ -115,11 +114,11 @@ def three_regions(bf_summit,bf_prefix=None,shiftsize=100,species="hg19"):
         info("Every line in %s were in legal range of chromesome"%bf_summit)
 
 
-    cmd="awk -v OFS='\t' '$2=$2-%d,$3=$3+%d' %s > %s"%(shiftsize,shiftsize-1,bf_tag("summits_filtered"),bf_tag("middle"))
+    cmd="awk -v OFS='\t' '{if ($3-$2==1) print $1,$2-%d,$3+%d,$4,$5; else print $1,$2,$3,$4,$5}' %s > %s"%(shiftsize,shiftsize-1,bf_tag("summits_filtered"),bf_tag("middle"))
     run(cmd)
-    cmd="awk -v OFS='\t' '$2=$2-%d,$3=$3-%d' %s > %s"%(shiftsize*3,shiftsize+1,bf_tag("summits_filtered"),bf_tag("left"))
+    cmd="awk -v OFS='\t' '{if ($3-$2==1) print $1,$2-%d,$3-%d,$4,$5; else print $1,$2*2-$3,$2,$4,$5}' %s > %s"%(shiftsize*3,shiftsize+1,bf_tag("summits_filtered"),bf_tag("left"))
     run(cmd)
-    cmd="awk -v OFS='\t' '$2=$2+%d,$3=$3+%d' %s > %s"%(shiftsize,shiftsize*3-1,bf_tag("summits_filtered"),bf_tag("right"))
+    cmd="awk -v OFS='\t' '{if ($3-$2==1) print $1,$2+%d,$3+%d,$4,$5; else print $1,$3,$3*2-$2,$4,$5}' %s > %s"%(shiftsize,shiftsize*3-1,bf_tag("summits_filtered"),bf_tag("right"))
     run(cmd)
     cmd="rm %s"%bf_tag("summits_filtered")
     run(cmd)

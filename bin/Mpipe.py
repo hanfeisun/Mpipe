@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-12-02 05:16:13 hanfei>
+# Time-stamp: <2011-12-05 11:11:14 sunhf>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -40,7 +40,7 @@ def prepare_optparser():
     optparser.add_option("-p","--percent",type="int",dest="n_top_percent",help="The percent of Top peak summits used to generate results. For example, input 1 for top 1% peaks")    
     optparser.add_option("-m","--motif",type="str",dest="motif_xml",help="The xml file of motif database.")
     optparser.add_option("-o","--name",type="str",dest="prefix_name",help="The name for this run, a directory will be created in this name in the current working directory, and the output file will all have a prefix of this name.")
-    optparser.add_option("-c","--cutoff",dest = "cutoff",type = "int",help = "The cutoff of the quotient of two likelyhood to throw some bad motif scores. default=1000",default=500) 
+    optparser.add_option("-c","--cutoff",dest = "cutoff",type = "int",help = "The cutoff of the quotient of two likelyhood to throw some bad motif scores. default=500",default=500) 
     optparser.add_option("-s","--shiftsize",dest = "shiftsize",type = "int",help = "Half of the region's length that you want to find the motif in. default=100",default=100)
     optparser.add_option("-k","--genomeversion",dest = "kind",type = "str",help = "What kind of Genome version to use. 'hg19' and 'mm9' available now. default=hg19",default="hg19")
     optparser.add_option("--debug",dest = "debug",action="store_true",help = "For debug only",default=False)    
