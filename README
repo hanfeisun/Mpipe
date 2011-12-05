@@ -21,6 +21,8 @@ Package Dependencies
     to check whether a region is in legal chromosome range
     (gawk in Linux)
 
+    Cython is also needed.
+    
     Python 2.6 or above is recommended.
 
 Installation
