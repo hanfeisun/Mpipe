@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-12-02 21:46:17 hanfei>
+# Time-stamp: <2012-01-06 11:03:04 sunhf>
 
 """Description: An executable for motif score comparing for left,right and middle regions.
 
@@ -44,7 +44,7 @@ r = rpy.r
 _name_p = lambda prefix_, part, suffix:prefix_+"_"+part+"."+suffix
 # produce a path name in the specified format
 
-def triple_SS_output(prefix, xml_file, cutoff=1000,debug_=False):
+def triple_SS_output(prefix, xml_file, cutoff=1000,debug_=False,cal_sum=True):
     """
     Run the pipeline from three region bed to three pickle files.
 
@@ -79,7 +79,7 @@ def triple_SS_output(prefix, xml_file, cutoff=1000,debug_=False):
         if debug_==True:
             info("debug mode on")
         seq_record = SPI.fetch_seq_record(fa)
-        result = SSc.summary_score(seq_record, seq_gc, mtf, cutoff,debug_)
+        result = SSc.summary_score(seq_record, seq_gc, mtf, cutoff,debug_,cal_sum)
         SS.output_record_pickle(output_file=part_pkl(part), *result)
         SS.output_SS_txt(output_file=curr_name(part, "txt"), *result)
         if part =="middle": 
@@ -155,7 +155,6 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
         md_col = fetch_col(middle_SS['s_SS'], col)
         rt_col = fetch_col(right_SS['s_SS'], col)
         r["options"](warn=-1)
-        # bnm = r["binom.test"](r["sum"](lt_col+rt_col, md_col))
         wcx = r["wilcox.test"](lt_col+rt_col, md_col,al="two.sided")
         center_mean = r['mean'](md_col)
         twoside_mean = r['mean'](lt_col+rt_col)
@@ -164,40 +163,7 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
                 wcx={'p.value':1}
             else:
                 pass
-                # wcx={'p.value':0.5} # fix the bias caused by cutoff
-
-        up_limit = max([max(i) for i in (lt_col,md_col,rt_col)])+0.1
-        width = up_limit/4.0
-        bins=[0,width,2*width,3*width,up_limit]
-        bin_lt = [0]*5
-        bin_md = bin_lt[:]
-        bin_rt = bin_lt[:]
-        
-        for lt,md,rt in zip(lt_col,md_col,rt_col):
-            lt /= width
-            md /= width
-            rt /= width
-            bin_lt[max(int(lt),0)]+=1
-            bin_md[max(int(md),0)]+=1
-            bin_rt[max(int(rt),0)]+=1
-        try:    
-            csq_left = r['chisq.test'](bin_lt[:4],bin_md[:4])
-            csq_right = r['chisq.test'](bin_rt[:4],bin_md[:4])
-        except:
-            if bin_lt==bin_md:
-                csq_left = {'p.value':1.0}
-            if bin_rt==bin_md:
-                csq_right = {'p.value':1.0}
-            if bin_rt!=bin_md and bin_lt!=bin_md:
-                raise
-        for pr in (wcx,csq_left,csq_right):
-            if str(pr['p.value']) == 'nan':
-                pr['p.value'] = 1.0
-            elif pr['p.value'] == 0.0:
-                pr['p.value'] = 1e-300
-        csq_p = {'p.value':max(csq_left['p.value'], csq_right['p.value'])}
         dic_item = {"mtf_id":m_id,
-                    "csq_-log10p":-10*log10(csq_p['p.value']),
                     "-log10p":-10*log10(wcx['p.value']),
                     "middle_mean":center_mean,
                     "twoside_mean":twoside_mean,
@@ -208,10 +174,6 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
                     "p.value":wcx['p.value'],
                     }
         metric_list.append(dic_item)
-    # pvalues = [i['p.value'] for i in metric_list]
-    # fdrs = r['p.adjust'](pvalues,method="fdr")
-    # for i,element in enumerate(metric_list):
-    #     element['fdr']=fdrs[i]
     return metric_list
 
 def dist_graph(metric_list , prefix):
@@ -284,7 +246,7 @@ def sig_test_output_html(metric_list, prefix,c_cutoff=1e-10):
     stradd = lambda *args:reduce(lambda s1, s2:s1+s2, args)
     nj = lambda x:"\n".join(x)
     cj = lambda x:", ".join(x)
-    select_keys = lambda i:[i["mtf_id"],i["-log10p"],i["csq_-log10p"],i["middle_mean"],
+    select_keys = lambda i:[i["mtf_id"],i["-log10p"],i["middle_mean"],
                             i["twoside_mean"],i["diff"],
                             cj(i["mtf_dbd"]) if i["mtf_dbd"]!=[] else "N/A",
                             cj(i["mtf_type"]),cj(i["mtf_name"])]
@@ -303,9 +265,9 @@ def sig_test_output_html(metric_list, prefix,c_cutoff=1e-10):
             else:
                 color_list.append(line(select_keys(i)))
         return color_list
-    txt = fst(["motif id", "-10log10(pvalue) (Wilcoxon test)","-10log10(pvalue) (Chi-square test)",
-               "mean of center", "mean of left and right","middle - side",
-               " motif dbd name", "motif type","motif names"])
+    txt = fst(["Motif ID", "-10log10(pvalue) (Wilcoxon test)",
+               "Mean of center", "Mean of side","middle - side",
+               "Motif dbd name", "Motif info","Alias"])
     txt += nj(auto_color(metric_list, 5))
     with open(output_file, 'w') as f:
         f.write(pg("Motif scores(%s)"%prefix, tb(txt)))
@@ -313,7 +275,7 @@ def sig_test_output_html(metric_list, prefix,c_cutoff=1e-10):
     
     info("%s has been output successfully!"%output_file)
     
-def main(prefix, motif_xml_file, cutoff=1000, continue_=False, debug_=False):
+def main(prefix, motif_xml_file, cutoff=1000, continue_=False, debug_=False,cal_sum=True):
     """
     Run the pipeline for motif scan and summary score comparing,testing on THREE regions.
 
@@ -337,7 +299,7 @@ def main(prefix, motif_xml_file, cutoff=1000, continue_=False, debug_=False):
                 error("No such pkl as %s! Please start from scratch"%one_pkl)
                 sys.exit(1)
     else:
-        triple_pkl = triple_SS_output(prefix, motif_xml_file,cutoff,debug_)
+        triple_pkl = triple_SS_output(prefix, motif_xml_file,cutoff,debug_,cal_sum)
     (lt, md, rt) = triple_SS_input(*triple_pkl)
     result = sig_test(lt, md, rt,motif_xml_file)
     dist_graph(result,prefix)

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-# Time-stamp: <2011-11-23 16:49:16 sunhf>
+# Time-stamp: <2011-12-29 13:03:08 sunhf>
 import sys
 import stat
-from distutils.core import setup, Extension
+from distutils.core import setup, Extension,run_setup
 from Cython.Distutils import build_ext
 def check_pkg_dependencies():
     try:

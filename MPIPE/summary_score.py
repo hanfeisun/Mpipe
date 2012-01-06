@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-10-11 18:28:50 root>
+# Time-stamp: <2012-01-06 10:45:06 sunhf>
 
 """Description: Main executable for motif scaning on ONE fasta file
 

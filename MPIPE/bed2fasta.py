@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-12-03 10:37:13 sunhf>
+# Time-stamp: <2011-12-21 15:10:27 sunhf>
 """Module Description: Main executable for converting summits bed to fasta files
 
 Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
@@ -19,7 +19,9 @@ import mf_corelib
 from check_file import check_bed,check_cmd,count_lines
 
 _fa_list={"hg19": ["chr%s.fa.masked"%_i for _i in range(1,23)+['X','Y','M']],
-          "mm9":["chr%s.fa.masked"%_i for _i in range(1,20)+['X','Y','M']]}
+          "mm9":["chr%s.fa.masked"%_i for _i in range(1,20)+['X','Y','M']],
+          "zv9":["chr%s.fa"%_i for _i in range(1,26)+['M']]
+          }
 _chrom_len={"hg19":{'chr1': 249250621, 'chr2': 243199373, 'chr3': 198022430,
                     'chr4': 191154276, 'chr5': 180915260, 'chr6': 171115067,
                     'chr7': 159138663, 'chrX': 155270560, 'chr8': 146364022,
@@ -36,10 +38,19 @@ _chrom_len={"hg19":{'chr1': 249250621, 'chr2': 243199373, 'chr3': 198022430,
                    'chr13': 120284312, 'chr14': 125194864, 'chr15': 103494974,
                    'chr16': 98319150, 'chr17': 95272651, 'chr18': 90772031,
                    'chr19': 61342430, 'chrX': 166650296, 'chrY': 15902555,
-                   'chrM':16299}}
+                   'chrM':16299},
+            "zv9":{'chr1':60348388,'chr2':60300536,'chr3':63268876,'chr4':62094675,
+                   'chr5':75682077,'chr6':59938731,'chr7':77276063,'chr8':56184765,
+                   'chr9':58232459,'chr10':46591166,'chr11':46661319,'chr12':50697278,
+                   'chr13':54093808,'chr14':53733891,'chr15':47442429,'chr16':58780683,
+                   'chr17':53984731,'chr18':49877488,'chr19':50254551,'chr20':55952140,
+                   'chr21':44544065,'chr22':42261000,'chr23':46386876,'chr24':43947580,
+                   'chr25':38499472}
+            }
 # _fa_list and chrom_len are only for hg19
 _fasta_default={'hg19': "./hg19.fa",
-                'mm9': "./mm9.fa"}
+                'mm9': "./mm9.fa",
+                'zv9': "./zv9.fa"}
 
 run=mf_corelib.run_cmd
 run_P=mf_corelib.run_cmd_PIPE

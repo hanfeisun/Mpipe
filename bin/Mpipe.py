@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-12-05 11:11:14 sunhf>
+# Time-stamp: <2012-01-06 10:50:53 sunhf>
 
 """Description: Main executable for a whole pipeline for motif scaning and comparing
 
@@ -42,8 +42,9 @@ def prepare_optparser():
     optparser.add_option("-o","--name",type="str",dest="prefix_name",help="The name for this run, a directory will be created in this name in the current working directory, and the output file will all have a prefix of this name.")
     optparser.add_option("-c","--cutoff",dest = "cutoff",type = "int",help = "The cutoff of the quotient of two likelyhood to throw some bad motif scores. default=500",default=500) 
     optparser.add_option("-s","--shiftsize",dest = "shiftsize",type = "int",help = "Half of the region's length that you want to find the motif in. default=100",default=100)
-    optparser.add_option("-k","--genomeversion",dest = "kind",type = "str",help = "What kind of Genome version to use. 'hg19' and 'mm9' available now. default=hg19",default="hg19")
-    optparser.add_option("--debug",dest = "debug",action="store_true",help = "For debug only",default=False)    
+    optparser.add_option("-k","--genomeversion",dest = "kind",type = "str",help = "What kind of Genome version to use. 'hg19', 'mm9' and 'zv9' are available now. default=hg19",default="hg19")
+    optparser.add_option("--debug",dest = "debug",action="store_true",help = "For debug only",default=False)
+    optparser.add_option("--max",dest = "max",action="store_true",help = "Use max value of windows' score within one sequence if True, else use max value",default=False)        
     (options,args) = optparser.parse_args()
 
     
@@ -113,7 +114,7 @@ def main():
     # convert bed to fasta files on three regions
     dir_prefix = op.prefix_name+"/"+op.prefix_name
     # produce an absolute path with the prefix
-    triple_SS.main(dir_prefix, op.motif_xml,op.cutoff,debug_=op.debug)
+    triple_SS.main(dir_prefix, op.motif_xml,op.cutoff,debug_=op.debug,cal_sum=not op.max)
     # use the files in 'prefix' dir to calculate scores
 if __name__ == '__main__':
     try:

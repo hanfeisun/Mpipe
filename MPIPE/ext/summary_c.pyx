@@ -2,9 +2,11 @@ import sys
 cdef extern from "math.h":
     float log(float theta)  
 _slice_seq = lambda start_points,width,raw_list:[raw_list[i:i+width] for i in start_points]
-_wipe_mask = lambda sliced_seq:[str(i) for i in sliced_seq if "N" not in i]
+_reserve = lambda garbages, seq: not any([a_garb in seq for a_garb in garbages])
+_wipe_mask = lambda sliced_seq:[str(i) for i in sliced_seq if _reserve("Natcg",i)]
+# filter out Natcg reads
 
-def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False):
+def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False,cal_sum=True):
     debug_stop_=False
     pssm_list = [[m_id,motifs[m_id]['pssm'][0]] for m_id in motifs]
     bg_GC = GC_content/2
@@ -29,10 +31,9 @@ def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False):
             win_S=[]
             for a_window in win_list[m_len]['win_seq']:
                 win_mtf_s = win_motif(str(a_window),pssm)
-
                 # calculate the PSSM score
+                
                 win_bg_s = win_bg(str(a_window),bg_AT,bg_GC)
-
                 win_S_s=win_mtf_s/win_bg_s
                 win_S.append(win_S_s if win_S_s>cutoff else 0)
                 # cut the low values off
@@ -43,18 +44,16 @@ def summary_score(seq_record_list,GC_content,motifs,cutoff=1000,debug_=False):
                         print win_bg_s
                         print win_S
                         sys.exit()
-            # if debug_:
-            #     print "pssm",
-            #     print pssm
-            #     print "win_list",
-            #     print win_list[m_len]['win_seq']
-            #     print "win_S",
-            #     print win_S
             mult_m_win_S.append(win_S)
             if debug_ and debug_stop_:
                 print mult_m_win_S
                 sys.exit()
-        seq_SS.append([seq_record.id,[log(max(sum(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
+
+        if cal_sum:
+            seq_SS.append([seq_record.id,[log(max(sum(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
+        else:
+            max_=lambda x:max(x) if x!=[] else 0
+            seq_SS.append([seq_record.id,[log(max(max_(one_m_win_S),1)) for one_m_win_S in mult_m_win_S]])
 
         # to avoid log0 error, this may have an affect similar to the cutoff
     motif_id = [i[0] for i in pssm_list]
