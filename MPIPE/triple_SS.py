@@ -20,27 +20,20 @@ from math import log10,trunc
 from pprint import pprint
 import mf_corelib as corelib
 
-try:
-    import rpy
-except RuntimeError:
-    try:
-        from rpy_options import set_options
-        set_options(RHOME='/usr/lib64/R') # for tongji's Cent OS server
-        import rpy
-    except:
-        corelib.error("Need to install rpy first")
-        corelib.error("If you have already install rpy, please specify the RHOME for the r library")
-        sys.exit(1)
+
         
 import summary_score as SS
 import summary_c as SSc
 import seq_pssm_io as SPI
-import html_output as ho    
+import html_output as ho
+
+import rpy2.robjects as ro
+r = ro.r
 
 run = corelib.run_cmd
 info = corelib.info
 error = corelib.error
-r = rpy.r
+
 _name_p = lambda prefix_, part, suffix:prefix_+"_"+part+"."+suffix
 # produce a path name in the specified format
 
@@ -156,8 +149,8 @@ def sig_test(left_SS, middle_SS, right_SS, motif_xml):
         rt_col = fetch_col(right_SS['s_SS'], col)
         r["options"](warn=-1)
         wcx = r["wilcox.test"](lt_col+rt_col, md_col,al="two.sided")
-        center_mean = r['mean'](md_col)
-        twoside_mean = r['mean'](lt_col+rt_col)
+        center_mean = sum(md_col)/len(md_col)
+        twoside_mean = sum(lt_col+rt_col)/len(lt_col+rt_col)
         if center_mean==0 or twoside_mean==0:
             if center_mean==twoside_mean:
                 wcx={'p.value':1}
