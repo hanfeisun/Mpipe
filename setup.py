@@ -25,7 +25,7 @@ def main():
           description="A pipeline for motif finding and scoring",
           package_dir={'MPIPE' : 'MPIPE'},
           packages=['MPIPE'],
-          install_requires=['biopython', 'rpy2'],
+          install_requires=['biopython', 'rpy2',"scipy"],
           scripts=['bin/Mpipe.py','bin/seq_GC_view.py','bin/motif_xml_view.py'],
           author='Hanfei Sun',
           version='0.10',
