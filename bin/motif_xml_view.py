@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# Time-stamp: <2011-11-23 16:51:21 sunhf>
+# Time-stamp: <2012-02-16 21:44:42 root>
 """Description: An executable for motif pssm viewing
 
 Copyright (c) 2011 Hanfei Sun <hfsun.tju@gmail.com>
@@ -35,17 +35,17 @@ if __name__ == '__main__':
     else:
         try:
             result=main(sys.argv[1])
-            print "-"*10+"PSSM"+"-"*10
             for motif_id in result:
                 mtf=result[motif_id]
-                print motif_id+"\t"*5+"-"*5+_sj(mtf['dbd'])
-                print "Synonym:  "+_cj(mtf['synonym'])
-                
-                for (index,pssm) in enumerate(mtf['pssm'][0]):
-                    print index+1,
-                    pssm=map(str,pssm)
-                    print "\t"+_tj(pssm)
-                print
+
+                print motif_id+"\t\t",                
+                print _cj(mtf['synonym'])
+
+                # for (index,pssm) in enumerate(mtf['pssm'][0]):
+                #     print index+1,
+                #     pssm=map(str,pssm)
+                #     print "\t"+_tj(pssm)
+                # print
 
             
         except KeyboardInterrupt:
