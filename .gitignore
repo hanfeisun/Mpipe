@@ -1,5 +1,3 @@
-syntax: glob
-
 *.fa
 *.bed
 *.xml
