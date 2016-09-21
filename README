@@ -92,11 +92,8 @@ Update
     You can download the newest non-installed package by typing in
     command:
 
-        $ hg clone https://bitbucket.org/hanfeisun/motif_test
+        $ git clone https://bitbucket.org/hanfeisun/Mpipe
 
-    If you prefer the setup package, do this:
-
-        $ hg clone https://bitbucket.org/hanfeisun/motif_test_setup_package
 
 API Documentation
 -----------------
