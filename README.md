@@ -10,6 +10,8 @@ This program involves three major functions:
 2. Use a motif PSSM to scan the 200bp DNA sequence and calculate a score for the motif occurrence. 
 3. Calculate a statistical measurement to see higher scores in middle 200bp windows than two surrounding windows. Measure the difference of summary scores distributions in middle v.s two surrounding windows.
 
+![Illustration of statistical measurement (by Tao Liu)](https://raw.githubusercontent.com/hanfeisun/Mpipe/master/figure.png)
+
 
 ## Package Dependencies
 
