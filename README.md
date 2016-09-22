@@ -34,6 +34,13 @@ Cython is only needed for developers. (http://cython.org/)
 
 Python 2.6 or above is recommended.
 
+## Download
+
+You can download the newest non-installed package by typing in
+command:
+
+$ git clone https://github.org/hanfeisun/Mpipe
+
 ## Installation
 
 ```
@@ -110,12 +117,7 @@ of mean between center and side regions. (Example: https://hanfeisun.github.io/M
 
 * The Histogram of difference of means between center and two sides (Example: https://hanfeisun.github.io/Mpipe_output/P300/P300_dist.pdf)
 
-## Update
 
-You can download the newest non-installed package by typing in
-command:
-
-$ git clone https://bitbucket.org/hanfeisun/Mpipe
 
 
  
